@@ -31,6 +31,10 @@ spec:
         - name: nginx-config
           mountPath: /etc/nginx/conf.d
         
+        # Mount Todo UI
+        - name: todo-ui
+          mountPath: /usr/share/nginx/html
+        
         # Resource limits
         resources:
           requests:
@@ -60,3 +64,10 @@ spec:
       - name: nginx-config
         configMap:
           name: nginx-config
+      
+      - name: todo-ui
+        configMap:
+          name: todo-ui
+          items:
+          - key: index.html
+            path: index.html

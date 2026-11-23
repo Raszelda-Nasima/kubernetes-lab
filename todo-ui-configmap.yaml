@@ -1,0 +1,680 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: todo-ui
+  namespace: app-production
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Kubernetes Todo App - Production Demo</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+    
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                padding: 20px;
+                color: #333;
+            }
+    
+            .container {
+                max-width: 900px;
+                margin: 0 auto;
+            }
+    
+            /* Header */
+            .header {
+                text-align: center;
+                color: white;
+                margin-bottom: 40px;
+                animation: slideDown 0.6s ease-out;
+            }
+    
+            .header h1 {
+                font-size: 2.5em;
+                font-weight: 700;
+                margin-bottom: 8px;
+                letter-spacing: -0.5px;
+            }
+    
+            .header p {
+                font-size: 1.1em;
+                opacity: 0.95;
+                font-weight: 300;
+            }
+    
+            /* Main Content */
+            .content {
+                display: grid;
+                grid-template-columns: 1fr 350px;
+                gap: 24px;
+                margin-bottom: 24px;
+            }
+    
+            /* Todo App Card */
+            .card {
+                background: white;
+                border-radius: 16px;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                padding: 32px;
+                animation: slideUp 0.6s ease-out;
+            }
+    
+            .card.sidebar {
+                padding: 24px;
+            }
+    
+            /* Input Section */
+            .input-section {
+                display: flex;
+                gap: 12px;
+                margin-bottom: 28px;
+            }
+    
+            .input-section input {
+                flex: 1;
+                padding: 12px 16px;
+                border: 2px solid #e5e7eb;
+                border-radius: 8px;
+                font-size: 1em;
+                font-family: inherit;
+                transition: all 0.3s ease;
+            }
+    
+            .input-section input:focus {
+                outline: none;
+                border-color: #667eea;
+                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+                background: #f8f9ff;
+            }
+    
+            .input-section input::placeholder {
+                color: #999;
+            }
+    
+            .btn {
+                padding: 12px 24px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 1em;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                white-space: nowrap;
+            }
+    
+            .btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            }
+    
+            .btn:active {
+                transform: translateY(0);
+            }
+    
+            /* Todo List */
+            .todo-list {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+    
+            .todo-item {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 16px;
+                background: #f9fafb;
+                border-radius: 8px;
+                border: 1px solid #e5e7eb;
+                transition: all 0.3s ease;
+                animation: slideIn 0.3s ease-out;
+            }
+    
+            .todo-item:hover {
+                background: #f3f4f6;
+                border-color: #d1d5db;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            }
+    
+            .todo-item.completed {
+                opacity: 0.6;
+            }
+    
+            .todo-item.completed .todo-text {
+                text-decoration: line-through;
+                color: #999;
+            }
+    
+            .todo-checkbox {
+                width: 24px;
+                height: 24px;
+                cursor: pointer;
+                accent-color: #667eea;
+                flex-shrink: 0;
+            }
+    
+            .todo-text {
+                flex: 1;
+                font-size: 1em;
+                transition: all 0.3s ease;
+            }
+    
+            .btn-delete {
+                padding: 6px 12px;
+                background: #fee2e2;
+                color: #dc2626;
+                border: 1px solid #fecaca;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 0.9em;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                flex-shrink: 0;
+            }
+    
+            .btn-delete:hover {
+                background: #fecaca;
+                border-color: #ef4444;
+            }
+    
+            /* Empty State */
+            .empty-state {
+                text-align: center;
+                padding: 48px 24px;
+                color: #999;
+            }
+    
+            .empty-state-icon {
+                font-size: 3em;
+                margin-bottom: 16px;
+                opacity: 0.5;
+            }
+    
+            .empty-state p {
+                font-size: 1.1em;
+                margin-bottom: 8px;
+            }
+    
+            .empty-state-hint {
+                font-size: 0.95em;
+                opacity: 0.7;
+            }
+    
+            /* Sidebar - System Status */
+            .system-status {
+                background: white;
+                border-radius: 16px;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                padding: 24px;
+                animation: slideUp 0.8s ease-out;
+            }
+    
+            .status-title {
+                font-size: 1.1em;
+                font-weight: 700;
+                margin-bottom: 20px;
+                color: #333;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+    
+            .status-title::before {
+                content: '';
+                width: 8px;
+                height: 8px;
+                background: #10b981;
+                border-radius: 50%;
+                animation: pulse 2s infinite;
+            }
+    
+            .status-item {
+                margin-bottom: 16px;
+                padding-bottom: 16px;
+                border-bottom: 1px solid #e5e7eb;
+            }
+    
+            .status-item:last-child {
+                border-bottom: none;
+                margin-bottom: 0;
+                padding-bottom: 0;
+            }
+    
+            .status-label {
+                font-size: 0.85em;
+                color: #666;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 6px;
+            }
+    
+            .status-value {
+                font-size: 1.05em;
+                color: #333;
+                font-weight: 600;
+                font-family: 'Monaco', 'Courier New', monospace;
+                word-break: break-all;
+            }
+    
+            .status-indicator {
+                display: inline-block;
+                width: 8px;
+                height: 8px;
+                background: #10b981;
+                border-radius: 50%;
+                margin-right: 6px;
+            }
+    
+            .status-indicator.error {
+                background: #ef4444;
+            }
+    
+            .stats-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+                margin-top: 16px;
+                padding-top: 16px;
+                border-top: 1px solid #e5e7eb;
+            }
+    
+            .stat-box {
+                text-align: center;
+                padding: 12px;
+                background: #f9fafb;
+                border-radius: 8px;
+            }
+    
+            .stat-number {
+                font-size: 1.5em;
+                font-weight: 700;
+                color: #667eea;
+            }
+    
+            .stat-label {
+                font-size: 0.8em;
+                color: #666;
+                margin-top: 4px;
+            }
+    
+            /* Footer */
+            .footer {
+                text-align: center;
+                color: white;
+                font-size: 0.9em;
+                opacity: 0.9;
+            }
+    
+            .footer a {
+                color: white;
+                text-decoration: none;
+                font-weight: 600;
+                transition: opacity 0.3s ease;
+            }
+    
+            .footer a:hover {
+                opacity: 0.7;
+            }
+    
+            /* Animations */
+            @keyframes slideDown {
+                from {
+                    opacity: 0;
+                    transform: translateY(-20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+    
+            @keyframes slideUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+    
+            @keyframes slideIn {
+                from {
+                    opacity: 0;
+                    transform: translateX(-10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+    
+            @keyframes pulse {
+                0%, 100% {
+                    opacity: 1;
+                }
+                50% {
+                    opacity: 0.5;
+                }
+            }
+    
+            /* Responsive */
+            @media (max-width: 768px) {
+                .content {
+                    grid-template-columns: 1fr;
+                }
+    
+                .header h1 {
+                    font-size: 1.8em;
+                }
+    
+                .card {
+                    padding: 20px;
+                }
+    
+                .stats-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+    
+            /* Loading */
+            .loading {
+                display: inline-block;
+                width: 4px;
+                height: 4px;
+                background: #667eea;
+                border-radius: 50%;
+                animation: blink 1.4s infinite;
+                margin-left: 4px;
+            }
+    
+            @keyframes blink {
+                0%, 60%, 100% {
+                    opacity: 0.3;
+                }
+                30% {
+                    opacity: 1;
+                }
+            }
+    
+            /* Success Message */
+            .toast {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: #10b981;
+                color: white;
+                padding: 14px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+                animation: slideIn 0.3s ease-out;
+                font-size: 0.95em;
+                z-index: 1000;
+            }
+    
+            .toast.error {
+                background: #ef4444;
+                box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <!-- Header -->
+            <div class="header">
+                <h1>✓ Kubernetes Todo App</h1>
+                <p>Running on Docker Desktop Kubernetes with PostgreSQL persistence</p>
+            </div>
+    
+            <!-- Main Content -->
+            <div class="content">
+                <!-- Todo App -->
+                <div class="card">
+                    <div class="input-section">
+                        <input 
+                            type="text" 
+                            id="todoInput" 
+                            placeholder="Add a new task..."
+                            autocomplete="off"
+                        >
+                        <button class="btn" onclick="addTodo()">Add</button>
+                    </div>
+    
+                    <div id="todoList" class="todo-list">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📝</div>
+                            <p>No todos yet</p>
+                            <div class="empty-state-hint">Add one to get started</div>
+                        </div>
+                    </div>
+                </div>
+    
+                <!-- System Status -->
+                <div class="system-status">
+                    <div class="status-title">System Status</div>
+    
+                    <div class="status-item">
+                        <div class="status-label">Backend</div>
+                        <div class="status-value">
+                            <span class="status-indicator"></span>
+                            Nginx Cluster
+                        </div>
+                    </div>
+    
+                    <div class="status-item">
+                        <div class="status-label">Database</div>
+                        <div class="status-value" id="dbStatus">
+                            <span class="status-indicator"></span>
+                            PostgreSQL
+                        </div>
+                    </div>
+    
+                    <div class="status-item">
+                        <div class="status-label">Environment</div>
+                        <div class="status-value">Kubernetes</div>
+                    </div>
+    
+                    <div class="status-item">
+                        <div class="status-label">Response Time</div>
+                        <div class="status-value" id="responseTime">
+                            <span class="loading"></span>
+                        </div>
+                    </div>
+    
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-number" id="todoCount">0</div>
+                            <div class="stat-label">Total Tasks</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number" id="completedCount">0</div>
+                            <div class="stat-label">Completed</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Footer -->
+            <div class="footer">
+                <p>🚀 Demonstrating <a href="#" title="Multi-tier architecture on Kubernetes">production-grade Kubernetes orchestration</a></p>
+            </div>
+        </div>
+    
+        <script>
+            // API endpoints
+            const API_URL = '/api';
+    
+            // Load todos on page load
+            document.addEventListener('DOMContentLoaded', () => {
+                loadTodos();
+                updateResponseTime();
+                setInterval(updateResponseTime, 10000);
+            });
+    
+            // Enter key to add todo
+            document.getElementById('todoInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addTodo();
+            });
+    
+            async function loadTodos() {
+                try {
+                    const response = await fetch(`${API_URL}/todos`);
+                    const todos = await response.json();
+                    renderTodos(todos);
+                    updateStats(todos);
+                } catch (error) {
+                    console.error('Error loading todos:', error);
+                    renderEmptyState();
+                }
+            }
+    
+            async function addTodo() {
+                const input = document.getElementById('todoInput');
+                const task = input.value.trim();
+    
+                if (!task) return;
+    
+                try {
+                    const response = await fetch(`${API_URL}/todos`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ task })
+                    });
+    
+                    if (response.ok) {
+                        input.value = '';
+                        loadTodos();
+                        showToast('Task added successfully');
+                    } else {
+                        showToast('Failed to add task', true);
+                    }
+                } catch (error) {
+                    console.error('Error adding todo:', error);
+                    showToast('Error adding task', true);
+                }
+            }
+    
+            async function toggleTodo(id, completed) {
+                try {
+                    const response = await fetch(`${API_URL}/todos/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ completed: !completed })
+                    });
+    
+                    if (response.ok) {
+                        loadTodos();
+                    } else {
+                        showToast('Failed to update task', true);
+                    }
+                } catch (error) {
+                    console.error('Error updating todo:', error);
+                    showToast('Error updating task', true);
+                }
+            }
+    
+            async function deleteTodo(id) {
+                try {
+                    const response = await fetch(`${API_URL}/todos/${id}`, {
+                        method: 'DELETE'
+                    });
+    
+                    if (response.ok) {
+                        loadTodos();
+                        showToast('Task deleted');
+                    } else {
+                        showToast('Failed to delete task', true);
+                    }
+                } catch (error) {
+                    console.error('Error deleting todo:', error);
+                    showToast('Error deleting task', true);
+                }
+            }
+    
+            function renderTodos(todos) {
+                const todoList = document.getElementById('todoList');
+    
+                if (!todos || todos.length === 0) {
+                    renderEmptyState();
+                    return;
+                }
+    
+                todoList.innerHTML = todos.map(todo => `
+                    <div class="todo-item ${todo.completed ? 'completed' : ''}">
+                        <input 
+                            type="checkbox" 
+                            class="todo-checkbox"
+                            ${todo.completed ? 'checked' : ''}
+                            onchange="toggleTodo(${todo.id}, ${todo.completed})"
+                        >
+                        <span class="todo-text">${escapeHtml(todo.task)}</span>
+                        <button class="btn-delete" onclick="deleteTodo(${todo.id})">Delete</button>
+                    </div>
+                `).join('');
+            }
+    
+            function renderEmptyState() {
+                const todoList = document.getElementById('todoList');
+                todoList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <p>No todos yet</p>
+                        <div class="empty-state-hint">Add one to get started</div>
+                    </div>
+                `;
+            }
+    
+            function updateStats(todos) {
+                const totalCount = todos.length;
+                const completedCount = todos.filter(t => t.completed).length;
+    
+                document.getElementById('todoCount').textContent = totalCount;
+                document.getElementById('completedCount').textContent = completedCount;
+            }
+    
+            async function updateResponseTime() {
+                const startTime = performance.now();
+                try {
+                    const response = await fetch(`${API_URL}/health`);
+                    const endTime = performance.now();
+                    const responseTime = Math.round(endTime - startTime);
+    
+                    document.getElementById('responseTime').textContent = `${responseTime}ms`;
+                } catch (error) {
+                    document.getElementById('responseTime').innerHTML = 
+                        '<span class="status-indicator error"></span>Offline';
+                }
+            }
+    
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+    
+            function showToast(message, isError = false) {
+                const toast = document.createElement('div');
+                toast.className = `toast ${isError ? 'error' : ''}`;
+                toast.textContent = message;
+                document.body.appendChild(toast);
+    
+                setTimeout(() => toast.remove(), 3000);
+            }
+        </script>
+    </body>
+    </html>
+    

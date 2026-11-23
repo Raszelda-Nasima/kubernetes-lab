@@ -1,0 +1,18 @@
+# Service: Expose Todo app to other pods in cluster
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-app-service
+  namespace: app-production
+  labels:
+    app: todo-app
+    tier: backend
+spec:
+  type: ClusterIP  # Internal service
+  selector:
+    app: todo-app
+    tier: backend
+  ports:
+  - port: 5000
+    targetPort: 5000
+    protocol: TCP

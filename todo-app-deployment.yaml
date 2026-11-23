@@ -1,0 +1,168 @@
+# Deployment: Run the Todo app backend using Python image
+# Installs dependencies and runs Flask app inline
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-app
+  namespace: app-production
+  labels:
+    app: todo-app
+    tier: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todo-app
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: todo-app
+        tier: backend
+    spec:
+      containers:
+      - name: todo-app
+        image: python:3.11-slim
+        imagePullPolicy: IfNotPresent
+        workingDir: /app
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          pip install -q flask flask-cors psycopg2-binary gunicorn &&
+          cat > /app/app.py << 'FLASKEOF'
+          from flask import Flask, jsonify, request
+          from flask_cors import CORS
+          import psycopg2
+          from psycopg2.extras import RealDictCursor
+          import os
+          
+          app = Flask(__name__)
+          CORS(app)
+          
+          DB_HOST = os.getenv('DB_HOST', 'postgres-service')
+          DB_PORT = os.getenv('DB_PORT', '5432')
+          DB_NAME = os.getenv('POSTGRES_DB', 'appdb')
+          DB_USER = os.getenv('POSTGRES_USER', 'appuser')
+          DB_PASSWORD = os.getenv('POSTGRES_PASSWORD', '')
+          
+          def get_db():
+              return psycopg2.connect(host=DB_HOST, port=DB_PORT, database=DB_NAME, user=DB_USER, password=DB_PASSWORD)
+          
+          def init_db():
+              try:
+                  conn = get_db()
+                  cursor = conn.cursor()
+                  cursor.execute('CREATE TABLE IF NOT EXISTS todos (id SERIAL PRIMARY KEY, task VARCHAR(255) NOT NULL, completed BOOLEAN DEFAULT FALSE, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);')
+                  conn.commit()
+                  cursor.close()
+                  conn.close()
+              except: pass
+          
+          init_db()
+          
+          @app.route('/api/health')
+          def health():
+              try:
+                  conn = get_db()
+                  cursor = conn.cursor()
+                  cursor.execute('SELECT NOW()')
+                  cursor.close()
+                  conn.close()
+                  return jsonify({'status': 'ok', 'database': 'connected'})
+              except Exception as e:
+                  return jsonify({'status': 'error', 'error': str(e)}), 503
+          
+          @app.route('/api/todos', methods=['GET'])
+          def get_todos():
+              try:
+                  conn = get_db()
+                  cursor = conn.cursor(cursor_factory=RealDictCursor)
+                  cursor.execute('SELECT id, task, completed, created_at FROM todos ORDER BY created_at DESC')
+                  todos = cursor.fetchall()
+                  cursor.close()
+                  conn.close()
+                  return jsonify([dict(t) for t in todos])
+              except Exception as e:
+                  return jsonify({'error': str(e)}), 500
+          
+          @app.route('/api/todos', methods=['POST'])
+          def create_todo():
+              try:
+                  data = request.get_json()
+                  task = data.get('task', '').strip()
+                  if not task:
+                      return jsonify({'error': 'Task required'}), 400
+                  conn = get_db()
+                  cursor = conn.cursor(cursor_factory=RealDictCursor)
+                  cursor.execute('INSERT INTO todos (task) VALUES (%s) RETURNING id, task, completed, created_at', (task,))
+                  todo = cursor.fetchone()
+                  conn.commit()
+                  cursor.close()
+                  conn.close()
+                  return jsonify(dict(todo)), 201
+              except Exception as e:
+                  return jsonify({'error': str(e)}), 500
+          
+          @app.route('/api/todos/<int:todo_id>', methods=['PUT'])
+          def update_todo(todo_id):
+              try:
+                  data = request.get_json()
+                  completed = data.get('completed', False)
+                  conn = get_db()
+                  cursor = conn.cursor(cursor_factory=RealDictCursor)
+                  cursor.execute('UPDATE todos SET completed = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s RETURNING id, task, completed', (completed, todo_id))
+                  todo = cursor.fetchone()
+                  conn.commit()
+                  cursor.close()
+                  conn.close()
+                  return jsonify(dict(todo)) if todo else (jsonify({'error': 'Not found'}), 404)
+              except Exception as e:
+                  return jsonify({'error': str(e)}), 500
+          
+          @app.route('/api/todos/<int:todo_id>', methods=['DELETE'])
+          def delete_todo(todo_id):
+              try:
+                  conn = get_db()
+                  cursor = conn.cursor()
+                  cursor.execute('DELETE FROM todos WHERE id = %s', (todo_id,))
+                  conn.commit()
+                  success = cursor.rowcount > 0
+                  cursor.close()
+                  conn.close()
+                  return (jsonify({'message': 'Deleted'}), 200) if success else (jsonify({'error': 'Not found'}), 404)
+              except Exception as e:
+                  return jsonify({'error': str(e)}), 500
+          
+          if __name__ == '__main__':
+              app.run(debug=False, host='0.0.0.0', port=5000)
+          FLASKEOF
+          gunicorn --bind 0.0.0.0:5000 --workers 2 app:app
+        
+        ports:
+        - containerPort: 5000
+        
+        envFrom:
+        - secretRef:
+            name: db-credentials
+        
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 5000
+          initialDelaySeconds: 15
+          periodSeconds: 5
