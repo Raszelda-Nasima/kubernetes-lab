@@ -1,0 +1,15 @@
+# ConfigMap: Stores non-sensitive configuration data
+# This allows configuration to be separate from application code
+# Changes to ConfigMap can be applied without rebuilding container images
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: app-production
+data:
+  # PostgreSQL connection settings (non-sensitive)
+  POSTGRES_USER: appuser
+  POSTGRES_DB: appdb
+  LOG_LEVEL: "INFO"
+  # Nginx configuration
+  nginx_worker_processes: "4"

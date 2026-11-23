@@ -1,0 +1,53 @@
+# Kubernetes Lab - Git Ignore File
+
+# Sensitive Data
+secret.yaml
+.env
+.env.local
+*.key
+*.pem
+
+# Kubernetes manifests with secrets (use sealed-secrets instead)
+*-secret*.yaml
+
+# Local development
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.iml
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+*.log
+logs/
+
+# Local kubeconfig backups
+kubeconfig-backup*
+kube-config*
+
+# Docker
+Dockerfile.local
+docker-compose.local.yml
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# Package manager
+node_modules/
+vendor/
+*.gem
+
+# Build artifacts
+build/
+dist/
+*.o
+*.so

@@ -1,0 +1,20 @@
+# Service: Expose Nginx to outside the cluster
+# Type: LoadBalancer requests Docker Desktop to expose port on host machine
+# In cloud (OpenShift/AWS), this would provision an actual load balancer
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+  namespace: app-production
+  labels:
+    app: nginx
+    tier: frontend
+spec:
+  type: LoadBalancer  # Expose outside cluster
+  selector:
+    app: nginx
+    tier: frontend
+  ports:
+  - port: 80          # Port exposed to outside
+    targetPort: 80    # Port on Nginx pods
+    protocol: TCP

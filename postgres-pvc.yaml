@@ -1,0 +1,15 @@
+# PersistentVolumeClaim: Requests storage from Kubernetes cluster
+# This ensures database data persists even if the container restarts
+# Without PVC, container data would be lost on pod restart
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: app-production
+spec:
+  accessModes:
+    - ReadWriteOnce  # Only one pod can mount this volume at a time
+  resources:
+    requests:
+      storage: 5Gi  # Request 5 GB of storage
+  storageClassName: standard  # Uses default storage class in Docker Desktop

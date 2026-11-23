@@ -1,0 +1,75 @@
+# Deployment: Declarative way to manage PostgreSQL pods
+# Kubernetes will ensure the specified number of replicas are always running
+# If a pod crashes, Kubernetes automatically creates a replacement
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: app-production
+  labels:
+    app: postgres
+    tier: database
+spec:
+  replicas: 1  # Run one PostgreSQL instance
+  selector:
+    matchLabels:
+      app: postgres
+      tier: database
+  template:
+    metadata:
+      labels:
+        app: postgres
+        tier: database
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:16-alpine  # Lightweight PostgreSQL image
+        ports:
+        - containerPort: 5432  # PostgreSQL default port
+        
+        # Environment variables from ConfigMap and Secret
+        envFrom:
+        - configMapRef:
+            name: app-config
+        - secretRef:
+            name: db-credentials
+        
+        # Volume mount for persistent storage
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data  # Where PostgreSQL stores data
+          subPath: postgres  # Subdirectory to avoid ownership issues
+        
+        # Resource limits: prevent this pod from consuming excessive resources
+        resources:
+          requests:
+            memory: "256Mi"  # Minimum memory needed
+            cpu: "100m"      # Minimum CPU needed (100 millicores = 0.1 CPU)
+          limits:
+            memory: "512Mi"  # Maximum memory allowed
+            cpu: "500m"      # Maximum CPU allowed
+        
+        # Liveness probe: check if container is still alive
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - pg_isready -U appuser -d appdb
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        
+        # Readiness probe: check if container is ready to accept traffic
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - pg_isready -U appuser -d appdb
+          initialDelaySeconds: 5
+          periodSeconds: 10
+      
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-pvc  # Use the PVC we defined earlier

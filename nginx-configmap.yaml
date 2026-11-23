@@ -1,0 +1,32 @@
+# ConfigMap: Store Nginx configuration file
+# This separates configuration from container image
+# Allows configuration changes without rebuilding image
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: app-production
+data:
+  default.conf: |
+    server {
+        listen 80;
+        server_name _;
+        
+        location / {
+            root /usr/share/nginx/html;
+            index index.html index.htm;
+        }
+        
+        # Health check endpoint for Kubernetes probes
+        location /health {
+            access_log off;
+            return 200 "healthy\n";
+            add_header Content-Type text/plain;
+        }
+        
+        # Proxy database connection information (for demonstration)
+        location /db-info {
+            default_type text/plain;
+            return 200 "Database Service: postgres-service.app-production.svc.cluster.local:5432\n";
+        }
+    }

@@ -1,0 +1,20 @@
+# Service: Exposes PostgreSQL pod to other pods in the cluster
+# Provides stable DNS name: postgres-service.app-production.svc.cluster.local
+# Kubernetes automatically routes traffic to the deployment's pods
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: app-production
+  labels:
+    app: postgres
+    tier: database
+spec:
+  type: ClusterIP  # Internal service - only accessible within cluster
+  selector:
+    app: postgres
+    tier: database
+  ports:
+  - port: 5432        # Port exposed by this service
+    targetPort: 5432  # Port on the pod to route to
+    protocol: TCP
