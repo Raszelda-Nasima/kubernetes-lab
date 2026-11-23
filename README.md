@@ -336,34 +336,6 @@ kubectl scale deployment nginx --replicas=2 -n app-production
 
 ---
 
-## Production Enhancements
-
-This lab demonstrates core concepts. For production, add:
-1. **Network Policies** - Restrict pod-to-pod communication
-2. **RBAC** - Role-based access control
-3. **Pod Security Policies** - Enforce security standards
-4. **Ingress** - Advanced HTTP routing
-5. **HPA** - Horizontal Pod Autoscaler (auto-scale based on CPU usage)
-6. **Monitoring** - Prometheus + Grafana for metrics
-7. **Logging** - ELK stack for centralized logs
-8. **Service Mesh** - Istio for advanced traffic management
-9. **GitOps** - ArgoCD for declarative deployment
-
----
-
-## Why This Matters for Your CV
-
-This project demonstrates:
-- ✅ **Kubernetes & OpenShift understanding** (core orchestration platform)
-- ✅ **Linux system administration** (container orchestration, networking, storage)
-- ✅ **Configuration management** (ConfigMaps, Secrets, declarative IaC)
-- ✅ **High availability patterns** (redundancy, self-healing, load balancing)
-- ✅ **Production mindset** (resource limits, health probes, persistent storage)
-- ✅ **DevOps practices** (infrastructure as code, service discovery, monitoring)
-
-
----
-
 ## References
 
 - [Kubernetes Official Documentation](https://kubernetes.io/docs/)
