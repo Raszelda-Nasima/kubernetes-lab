@@ -47,16 +47,6 @@ LOG_LEVEL: INFO
 - In production, use HashiCorp Vault or cloud provider's secret manager
 - Can be referenced by pods via environment variables or volume mounts
 
-**Example data:**
-```
-POSTGRES_PASSWORD: SecurePassword123!
-DB_HOST: postgres-service
-```
-
-**Why it matters:** Shows understanding of security best practices and secret management in Kubernetes
-
-**Note:** This lab uses basic Kubernetes Secrets for learning. Production uses encryption at rest and external secret management.
-
 ---
 
 ### 4. **PersistentVolumeClaim (PVC)** (`postgres-pvc.yaml`)
@@ -371,7 +361,6 @@ This project demonstrates:
 - ✅ **Production mindset** (resource limits, health probes, persistent storage)
 - ✅ **DevOps practices** (infrastructure as code, service discovery, monitoring)
 
-These are exactly what hiring managers look for in systems engineer roles!
 
 ---
 
